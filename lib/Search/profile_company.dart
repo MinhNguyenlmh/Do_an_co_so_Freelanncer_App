@@ -26,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String phoneNumber = '';
   String imageUrl = '';
   String joinedAt = '';
+  String location = ''; // New field for location
   bool _isLoading = false;
   bool _isSameUser = false;
 
@@ -46,6 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           email = userDoc.get('email');
           phoneNumber = userDoc.get('phoneNumber');
           imageUrl = userDoc.get('userImage');
+          location = userDoc.get('location'); // Fetch location
           Timestamp joinedAtTimeStamp = userDoc.get('createAt');
           var joinedDate = joinedAtTimeStamp.toDate();
           joinedAt = '${joinedDate.year} - ${joinedDate.month} - ${joinedDate.day}';
@@ -98,7 +100,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required Color color,
     required Function fct,
     required IconData icon
-}){
+  }) {
     return CircleAvatar(
       backgroundColor: color,
       radius: 30,
@@ -110,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             icon,
             color: color,
           ),
-          onPressed: (){
+          onPressed: () {
             fct();
           },
         ),
@@ -118,12 +120,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _openWhatsAppChat() async{
+  void _openWhatsAppChat() async {
     var url = 'https://wa.me/$phoneNumber?text=Hello';
     launchUrlString(url);
   }
 
-  void _mailTo() async{
+  void _mailTo() async {
     final Uri paramas = Uri(
       scheme: 'mailto',
       path: email,
@@ -133,11 +135,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     launchUrlString(url);
   }
 
-  void _callPhoneNumber() async{
+  void _callPhoneNumber() async {
     var url = 'tel://$phoneNumber';
     launchUrlString(url);
   }
 
+  void _showFullImage(String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          child: GestureDetector(
+            onTap: () {
+              Navigator.of(ctx).pop();
+            },
+            child: Center(
+              child: Image.network(imageUrl),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -180,11 +200,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             alignment: Alignment.center,
                             child: Column(
                               children: [
-                                CircleAvatar(
-                                  backgroundImage: imageUrl.isNotEmpty
-                                      ? NetworkImage(imageUrl)
-                                      : null,
-                                  radius: 50,
+                                GestureDetector(
+                                  onTap: () {
+                                    _showFullImage(imageUrl);
+                                  },
+                                  child: CircleAvatar(
+                                    backgroundImage: imageUrl.isNotEmpty
+                                        ? NetworkImage(imageUrl)
+                                        : null,
+                                    radius: 60, // Increased size
+                                    backgroundColor: Colors.grey[300],
+                                    child: imageUrl.isEmpty
+                                        ? Icon(Icons.person, size: 60)
+                                        : null,
+                                  ),
                                 ),
                                 SizedBox(height: 10),
                                 Text(
@@ -223,7 +252,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     content: phoneNumber,
                                   ),
                                 ),
-
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: userInfo(
+                                    icon: Icons.location_on,
+                                    content: location,
+                                  ),
+                                ),
                                 const SizedBox(height: 15),
                                 const Divider(
                                   thickness: 1,
@@ -231,34 +266,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                                 const SizedBox(height: 35),
                                 _isSameUser
-                                ? Container()
-                                :Row(
+                                    ? Container()
+                                    : Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                                   children: [
                                     _contactBy(
-                                        color: Colors.green,
-                                        fct: (){
-                                          _openWhatsAppChat();
-                                        },
-                                        icon: FontAwesome.whatsapp,
+                                      color: Colors.green,
+                                      fct: () {
+                                        _openWhatsAppChat();
+                                      },
+                                      icon: FontAwesome.whatsapp,
                                     ),
                                     _contactBy(
                                       color: Colors.red,
-                                      fct: (){
+                                      fct: () {
                                         _mailTo();
                                       },
                                       icon: Icons.mail_outline,
                                     ),
                                     _contactBy(
                                       color: Colors.purple,
-                                      fct: (){
+                                      fct: () {
                                         _callPhoneNumber();
                                       },
                                       icon: Icons.call,
                                     )
                                   ],
                                 ),
-
                                 const SizedBox(height: 30),
                                 const SizedBox(height: 30),
                                 !_isSameUser
@@ -305,7 +339,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
-
                 ],
               ),
             ),
@@ -315,4 +348,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
